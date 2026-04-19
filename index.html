@@ -102,22 +102,18 @@
   //  - `image` = direct URL to the image (must be publicly reachable)
   //  - `caption` is optional; leave as "" to hide it
   // ================================================================
-  // Put your image files inside an "images" folder next to this file,
-  // then reference them with relative paths like below.
+  // Put your image files inside an "images" folder next to this file.
+  // The caption is automatically generated from the filename
+  // (e.g., "RAM_Q3_Performance.jpg" becomes "RAM Q3 Performance").
+  //
+  // To override the auto caption, add: caption: "Your custom text"
+  // To hide the caption entirely for a slide, add: caption: ""
+  //
   // Filenames are case-sensitive on GitHub Pages.
   const slides = [
-    {
-      image:   "images/slide1.jpg",
-      caption: "Weekly Performance Highlights"
-    },
-    {
-      image:   "images/slide2.jpg",
-      caption: "Top Accounts: RAM · HANDYMAN · DEPT. STORE"
-    },
-    {
-      image:   "images/slide3.jpg",
-      caption: "Pipeline Update — Week Ahead"
-    }
+    { image: "images/slide1.jpg" },
+    { image: "images/slide2.jpg" },
+    { image: "images/slide3.jpg" }
   ];
 
   // ================================================================
@@ -127,14 +123,25 @@
   const TRANSITION_EFFECT = "fade"; // "fade" or "slide"
   // ================================================================
 
+  // Convert a file path into a human-readable title.
+  // "images/RAM_Q3_Performance.jpg" -> "RAM Q3 Performance"
+  function filenameToTitle(path) {
+    const filename = path.split("/").pop();          // drop folder path
+    const nameOnly = filename.replace(/\.[^.]+$/, ""); // drop extension
+    return nameOnly.replace(/[_-]+/g, " ").trim();   // underscores/hyphens -> spaces
+  }
+
   // Render the slides
   const wrapper = document.getElementById("slides");
-  wrapper.innerHTML = slides.map(s => `
-    <div class="swiper-slide">
-      <img src="${s.image}" alt="">
-      ${s.caption ? `<div class="caption">${s.caption}</div>` : ""}
-    </div>
-  `).join("");
+  wrapper.innerHTML = slides.map(s => {
+    const caption = s.caption === undefined ? filenameToTitle(s.image) : s.caption;
+    return `
+      <div class="swiper-slide">
+        <img src="${s.image}" alt="${caption}">
+        ${caption ? `<div class="caption">${caption}</div>` : ""}
+      </div>
+    `;
+  }).join("");
 
   // Initialize Swiper
   new Swiper(".swiper", {

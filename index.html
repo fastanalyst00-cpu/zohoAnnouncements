@@ -39,7 +39,6 @@
     display: block;
   }
 
-  /* Optional caption overlay on each slide */
   .caption {
     position: absolute;
     bottom: 24px;
@@ -54,7 +53,6 @@
     pointer-events: none;
   }
 
-  /* Dark gradient at the bottom so captions stay readable on light images */
   .caption::before {
     content: "";
     position: absolute;
@@ -66,31 +64,47 @@
     z-index: -1;
   }
 
-  /* Styling the pagination dots and nav arrows */
-  .swiper-pagination-bullet {
-    background: #ffffff;
-    opacity: 0.5;
-  }
-  .swiper-pagination-bullet-active {
-    background: #ffffff;
-    opacity: 1;
-  }
-  .swiper-button-next,
-  .swiper-button-prev {
+  .swiper-pagination-bullet { background: #ffffff; opacity: 0.5; }
+  .swiper-pagination-bullet-active { background: #ffffff; opacity: 1; }
+  .swiper-button-next, .swiper-button-prev {
     color: #ffffff;
     --swiper-navigation-size: 28px;
+  }
+
+  /* Status panel shown during load or on error */
+  .status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px;
+    color: #444;
+    font-size: 15px;
+    line-height: 1.5;
+    background: #f9f9f9;
+  }
+  .status.error {
+    background: #fff3f3;
+    color: #8b0000;
+  }
+  .status code {
+    background: rgba(0,0,0,0.08);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
   }
 </style>
 </head>
 <body>
 
-<div class="swiper">
+<div id="status" class="status">Loading images…</div>
+
+<div class="swiper" id="carousel" style="display:none;">
   <div class="swiper-wrapper" id="slides"></div>
-
-  <!-- Pagination dots -->
   <div class="swiper-pagination"></div>
-
-  <!-- Navigation arrows (delete these two lines if you don't want arrows) -->
   <div class="swiper-button-next"></div>
   <div class="swiper-button-prev"></div>
 </div>
@@ -98,71 +112,110 @@
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
   // ================================================================
-  //  EDIT THIS LIST to change your carousel content.
-  //  - `image` = direct URL to the image (must be publicly reachable)
-  //  - `caption` is optional; leave as "" to hide it
+  //  CONFIG — edit these three values to match YOUR GitHub repo.
+  //
+  //  Example: if your repo URL is
+  //      https://github.com/danielcruz/dashboard-carousel
+  //  then:
+  //      GITHUB_USER  = "danielcruz"
+  //      GITHUB_REPO  = "dashboard-carousel"
   // ================================================================
-  // Put your image files inside an "images" folder next to this file.
-  // The caption is automatically generated from the filename
-  // (e.g., "RAM_Q3_Performance.jpg" becomes "RAM Q3 Performance").
-  //
-  // To override the auto caption, add: caption: "Your custom text"
-  // To hide the caption entirely for a slide, add: caption: ""
-  //
-  // Filenames are case-sensitive on GitHub Pages.
-  const slides = [
-    { image: "images/slide1.jpg" },
-    { image: "images/slide2.jpg" },
-    { image: "images/slide3.jpg" }
-  ];
+  const GITHUB_USER    = "your-github-username";
+  const GITHUB_REPO    = "your-repo-name";
+  const IMAGES_FOLDER  = "images";
+  const GITHUB_BRANCH  = "main";     // "main" for most repos, "master" for older ones
 
-  // ================================================================
-  //  CAROUSEL SETTINGS — tweak if you want
-  // ================================================================
-  const AUTOPLAY_DELAY_MS = 4000;   // time each slide stays visible
-  const TRANSITION_EFFECT = "fade"; // "fade" or "slide"
+  const AUTOPLAY_DELAY_MS = 4000;
+  const TRANSITION_EFFECT = "fade";  // "fade" or "slide"
   // ================================================================
 
-  // Convert a file path into a human-readable title.
-  // "images/RAM_Q3_Performance.jpg" -> "RAM Q3 Performance"
-  function filenameToTitle(path) {
-    const filename = path.split("/").pop();          // drop folder path
-    const nameOnly = filename.replace(/\.[^.]+$/, ""); // drop extension
-    return nameOnly.replace(/[_-]+/g, " ").trim();   // underscores/hyphens -> spaces
+  const statusEl   = document.getElementById("status");
+  const carouselEl = document.getElementById("carousel");
+  const slidesEl   = document.getElementById("slides");
+
+  function showError(message) {
+    statusEl.classList.add("error");
+    statusEl.innerHTML = message;
   }
 
-  // Render the slides
-  const wrapper = document.getElementById("slides");
-  wrapper.innerHTML = slides.map(s => {
-    const caption = s.caption === undefined ? filenameToTitle(s.image) : s.caption;
-    return `
-      <div class="swiper-slide">
-        <img src="${s.image}" alt="${caption}">
-        ${caption ? `<div class="caption">${caption}</div>` : ""}
-      </div>
-    `;
-  }).join("");
+  // "RAM_Q3_Performance.jpg" -> "RAM Q3 Performance"
+  function filenameToTitle(name) {
+    return name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  }
 
-  // Initialize Swiper
-  new Swiper(".swiper", {
-    loop: true,
-    effect: TRANSITION_EFFECT,
-    fadeEffect: { crossFade: true },
-    speed: 800,
-    autoplay: {
-      delay: AUTOPLAY_DELAY_MS,
-      disableOnInteraction: false,
-      pauseOnMouseEnter: false
-    },
-    pagination: {
-      el: ".swiper-pagination",
-      clickable: true
-    },
-    navigation: {
-      nextEl: ".swiper-button-next",
-      prevEl: ".swiper-button-prev"
+  async function loadImages() {
+    const apiUrl =
+      `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}` +
+      `/contents/${IMAGES_FOLDER}?ref=${GITHUB_BRANCH}`;
+
+    let response;
+    try {
+      response = await fetch(apiUrl);
+    } catch (err) {
+      showError(`Could not reach GitHub.<br><br><small>${err.message}</small>`);
+      return;
     }
-  });
+
+    if (response.status === 404) {
+      showError(
+        `GitHub returned <b>404 Not Found</b>.<br><br>` +
+        `Check that <code>${GITHUB_USER}/${GITHUB_REPO}</code> is a <b>public</b> repo, ` +
+        `the folder <code>${IMAGES_FOLDER}</code> exists, and the branch is <code>${GITHUB_BRANCH}</code>.`
+      );
+      return;
+    }
+    if (response.status === 403) {
+      showError(`GitHub API rate limit reached. Try again in an hour.`);
+      return;
+    }
+    if (!response.ok) {
+      showError(`GitHub API error: ${response.status} ${response.statusText}`);
+      return;
+    }
+
+    const files = await response.json();
+
+    const images = files
+      .filter(f => f.type === "file" && /\.(jpe?g|png|gif|webp|bmp)$/i.test(f.name))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+    if (images.length === 0) {
+      showError(
+        `No images found in <code>${IMAGES_FOLDER}/</code>.<br><br>` +
+        `Supported: .jpg .jpeg .png .gif .webp .bmp`
+      );
+      return;
+    }
+
+    slidesEl.innerHTML = images.map(img => {
+      const title = filenameToTitle(img.name);
+      return `
+        <div class="swiper-slide">
+          <img src="${img.download_url}" alt="${title}">
+          <div class="caption">${title}</div>
+        </div>
+      `;
+    }).join("");
+
+    statusEl.style.display = "none";
+    carouselEl.style.display = "block";
+
+    new Swiper("#carousel", {
+      loop: images.length > 1,
+      effect: TRANSITION_EFFECT,
+      fadeEffect: { crossFade: true },
+      speed: 800,
+      autoplay: {
+        delay: AUTOPLAY_DELAY_MS,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: false
+      },
+      pagination: { el: ".swiper-pagination", clickable: true },
+      navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" }
+    });
+  }
+
+  loadImages();
 </script>
 
 </body>

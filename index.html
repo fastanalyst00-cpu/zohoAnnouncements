@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Carousel</title>
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+
+  .swiper {
+    width: 100%;
+    height: 100vh;
+  }
+
+  .swiper-slide {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f4f4;
+    overflow: hidden;
+  }
+
+  .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Optional caption overlay on each slide */
+  .caption {
+    position: absolute;
+    bottom: 24px;
+    left: 32px;
+    right: 32px;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Dark gradient at the bottom so captions stay readable on light images */
+  .caption::before {
+    content: "";
+    position: absolute;
+    left: -32px;
+    right: -32px;
+    bottom: -24px;
+    height: 140px;
+    background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0));
+    z-index: -1;
+  }
+
+  /* Styling the pagination dots and nav arrows */
+  .swiper-pagination-bullet {
+    background: #ffffff;
+    opacity: 0.5;
+  }
+  .swiper-pagination-bullet-active {
+    background: #ffffff;
+    opacity: 1;
+  }
+  .swiper-button-next,
+  .swiper-button-prev {
+    color: #ffffff;
+    --swiper-navigation-size: 28px;
+  }
+</style>
+</head>
+<body>
+
+<div class="swiper">
+  <div class="swiper-wrapper" id="slides"></div>
+
+  <!-- Pagination dots -->
+  <div class="swiper-pagination"></div>
+
+  <!-- Navigation arrows (delete these two lines if you don't want arrows) -->
+  <div class="swiper-button-next"></div>
+  <div class="swiper-button-prev"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+  // ================================================================
+  //  EDIT THIS LIST to change your carousel content.
+  //  - `image` = direct URL to the image (must be publicly reachable)
+  //  - `caption` is optional; leave as "" to hide it
+  // ================================================================
+  // Put your image files inside an "images" folder next to this file,
+  // then reference them with relative paths like below.
+  // Filenames are case-sensitive on GitHub Pages.
+  const slides = [
+    {
+      image:   "images/slide1.jpg",
+      caption: "Weekly Performance Highlights"
+    },
+    {
+      image:   "images/slide2.jpg",
+      caption: "Top Accounts: RAM · HANDYMAN · DEPT. STORE"
+    },
+    {
+      image:   "images/slide3.jpg",
+      caption: "Pipeline Update — Week Ahead"
+    }
+  ];
+
+  // ================================================================
+  //  CAROUSEL SETTINGS — tweak if you want
+  // ================================================================
+  const AUTOPLAY_DELAY_MS = 4000;   // time each slide stays visible
+  const TRANSITION_EFFECT = "fade"; // "fade" or "slide"
+  // ================================================================
+
+  // Render the slides
+  const wrapper = document.getElementById("slides");
+  wrapper.innerHTML = slides.map(s => `
+    <div class="swiper-slide">
+      <img src="${s.image}" alt="">
+      ${s.caption ? `<div class="caption">${s.caption}</div>` : ""}
+    </div>
+  `).join("");
+
+  // Initialize Swiper
+  new Swiper(".swiper", {
+    loop: true,
+    effect: TRANSITION_EFFECT,
+    fadeEffect: { crossFade: true },
+    speed: 800,
+    autoplay: {
+      delay: AUTOPLAY_DELAY_MS,
+      disableOnInteraction: false,
+      pauseOnMouseEnter: false
+    },
+    pagination: {
+      el: ".swiper-pagination",
+      clickable: true
+    },
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev"
+    }
+  });
+</script>
+
+</body>
+</html>
